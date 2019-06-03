@@ -17,6 +17,7 @@ package com.google.android.exoplayer2.imademo;
 
 import android.content.Context;
 import android.net.Uri;
+import android.util.Log;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.C.ContentType;
 import com.google.android.exoplayer2.ExoPlayer;
@@ -41,11 +42,24 @@ import com.google.android.exoplayer2.util.Util;
   private final DataSource.Factory dataSourceFactory;
 
   private SimpleExoPlayer player;
-  private long contentPosition;
+  private boolean usePrerollAds = false;
+  private long contentPosition = 380 * 1000;
 
   public PlayerManager(Context context) {
-    String adTag = context.getString(R.string.ad_tag_url);
-    adsLoader = new ImaAdsLoader(context, Uri.parse(adTag));
+    String adTag = context.getString(usePrerollAds ?
+        R.string.ad_tag_midrolls_w_preroll :
+        R.string.ad_tag_midrolls_no_preroll);
+    adsLoader = new ImaAdsLoader.Builder(context)
+        .setVastLoadTimeoutMs(30 * 1000)
+        .setMediaLoadTimeoutMs(30 * 1000)
+        .setAdEventListener(adEvent -> {
+          Log.d("PlayerManager", String.format("AdEvent: [%s]", adEvent));
+        })
+        .buildForAdTag(Uri.parse(adTag));
+    adsLoader.getAdsLoader().addAdErrorListener(adErrorEvent -> {
+      Log.w("PlayerManager", String.format("ADERROR: [%s]", adErrorEvent.getError()));
+    });
+
     dataSourceFactory =
         new DefaultDataSourceFactory(
             context, Util.getUserAgent(context, context.getString(R.string.application_name)));
@@ -68,13 +82,13 @@ import com.google.android.exoplayer2.util.Util;
 
     // Prepare the player with the source.
     player.seekTo(contentPosition);
-    player.prepare(mediaSourceWithAds);
+    player.prepare(mediaSourceWithAds, false, false);
     player.setPlayWhenReady(true);
   }
 
   public void reset() {
     if (player != null) {
-      contentPosition = player.getContentPosition();
+      //contentPosition = player.getContentPosition();
       player.release();
       player = null;
       adsLoader.setPlayer(null);

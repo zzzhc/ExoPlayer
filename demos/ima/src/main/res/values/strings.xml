@@ -17,8 +17,10 @@
 
   <string name="application_name">Exo IMA Demo</string>
 
-  <string name="content_url"><![CDATA[https://storage.googleapis.com/exoplayer-test-media-1/mkv/android-screens-lavf-56.36.100-aac-avc-main-1280x720.mkv]]></string>
+  <!--<string name="content_url"><![CDATA[https://storage.googleapis.com/exoplayer-test-media-1/mkv/android-screens-lavf-56.36.100-aac-avc-main-1280x720.mkv]]></string>-->
+  <string name="content_url"><![CDATA[https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4]]></string>
 
-  <string name="ad_tag_url"><![CDATA[https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator=]]></string>
+  <string name="ad_tag_midrolls_no_preroll"><![CDATA[https://pubads.g.doubleclick.net/gampad/ads?iu=/21718753908/ifix-china-test&cust_params=majorVersion%3D3.20%26version%3D3.20.0%26tier%3Dfree|premium%26platform%3Dandroid%26userLang%3Den%26VideoAdsDisplay%3Dtrue%26streamtype%3Dvod&cmsid=2484138&vid=116909&rdid=f2f7d0cc-7086-49be-a088-b7529881dcbc-ixdi&is_lat=0&idtype=idfa&ppid=12B34C67-DCE3-4DEB-8B48-A23892CD7C23&description_url=https://piay.iflix.com/tv/186808&url=&env=vp&impl=s&correlator=&tfcd=0&npa=0&gdfp_req=1&output=vast&sz=640x480&unviewed_position_start=1&ad_rule=1]]></string>
 
+  <string name="ad_tag_midrolls_w_preroll"><![CDATA[https://pubads.g.doubleclick.net/gampad/ads?iu=/21718753908/ifix-china-test&cust_params=majorVersion%3D3.20%26version%3D3.20.0%26tier%3Dfree%26platform%3Dandroid%26userLang%3Den%26VideoAdsDisplay%3Dtrue%26streamtype%3Dvod&cmsid=2484138&vid=30869&rdid=f2f7d0cc-7086-49be-a088-b7529881dcbc-ixdi&is_lat=0&idtype=idfa&ppid=12B34C67-DCE3-4DEB-8B48-A23892CD7C23&description_url=https://piay.iflix.com/tv/186808&url=&env=vp&impl=s&correlator=&tfcd=0&npa=0&gdfp_req=1&output=vast&sz=640x480&unviewed_position_start=1&ad_rule=1]]></string>
 </resources>

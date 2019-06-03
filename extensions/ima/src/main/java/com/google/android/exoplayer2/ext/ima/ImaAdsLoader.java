@@ -1055,7 +1055,12 @@ public final class ImaAdsLoader
     int adGroupIndexForPosition =
         adPlaybackState.getAdGroupIndexForPositionUs(C.msToUs(contentPositionMs));
     if (adGroupIndexForPosition == 0) {
-      podIndexOffset = 0;
+      if (adGroupTimesUs[0] > 0) {
+        // no preroll
+        podIndexOffset = -1;
+      } else {
+        podIndexOffset = 0;
+      }
     } else if (adGroupIndexForPosition == C.INDEX_UNSET) {
       // There is no preroll and midroll pod indices start at 1.
       podIndexOffset = -1;

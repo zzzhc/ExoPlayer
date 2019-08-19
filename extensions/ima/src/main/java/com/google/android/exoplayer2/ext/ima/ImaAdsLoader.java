@@ -269,7 +269,7 @@ public final class ImaAdsLoader
     }
   }
 
-  private static final boolean DEBUG = false;
+  private static final boolean DEBUG = true;
   private static final String TAG = "ImaAdsLoader";
 
   /**

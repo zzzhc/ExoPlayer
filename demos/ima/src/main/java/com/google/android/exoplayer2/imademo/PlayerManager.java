@@ -32,6 +32,7 @@ import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.exoplayer2.util.EventLogger;
 import com.google.android.exoplayer2.util.Util;
 
 /** Manages the {@link ExoPlayer}, the IMA plugin and all video playback. */
@@ -54,6 +55,7 @@ import com.google.android.exoplayer2.util.Util;
   public void init(Context context, PlayerView playerView) {
     // Create a player instance.
     player = new SimpleExoPlayer.Builder(context).build();
+    player.addAnalyticsListener(new EventLogger(null));
     adsLoader.setPlayer(player);
     playerView.setPlayer(player);
 

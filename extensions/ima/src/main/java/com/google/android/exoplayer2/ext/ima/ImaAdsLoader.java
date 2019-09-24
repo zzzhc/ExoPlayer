@@ -225,7 +225,6 @@ public final class ImaAdsLoader
      *
      * @param enablePrecedingAd Whether to enable preceding Ad before the content position.
      * @return This builder, for convenience.
-     * @see AdsRenderingSettings#setFocusSkipButtonWhenAvailable(boolean)
      */
     public Builder setEnablePrecedingAd(boolean enablePrecedingAd) {
       this.enablePrecedingAd = enablePrecedingAd;

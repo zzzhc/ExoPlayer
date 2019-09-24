@@ -110,6 +110,7 @@ public final class ImaAdsLoader
     private int mediaLoadTimeoutMs;
     private int mediaBitrate;
     private boolean focusSkipButtonWhenAvailable;
+    private boolean enablePrecedingAd;
     private ImaFactory imaFactory;
 
     /**
@@ -123,6 +124,7 @@ public final class ImaAdsLoader
       mediaLoadTimeoutMs = TIMEOUT_UNSET;
       mediaBitrate = BITRATE_UNSET;
       focusSkipButtonWhenAvailable = true;
+      enablePrecedingAd = true;
       imaFactory = new DefaultImaFactory();
     }
 
@@ -217,6 +219,18 @@ public final class ImaAdsLoader
       return this;
     }
 
+    /**
+     * Sets whether to enable preceding Ad before the content position. The default
+     * setting is {@code true}.
+     *
+     * @param enablePrecedingAd Whether to enable preceding Ad before the content position.
+     * @return This builder, for convenience.
+     */
+    public Builder setEnablePrecedingAd(boolean enablePrecedingAd) {
+      this.enablePrecedingAd = enablePrecedingAd;
+      return this;
+    }
+
     @VisibleForTesting
     /* package */ Builder setImaFactory(ImaFactory imaFactory) {
       this.imaFactory = Assertions.checkNotNull(imaFactory);
@@ -241,6 +255,7 @@ public final class ImaAdsLoader
           mediaLoadTimeoutMs,
           mediaBitrate,
           focusSkipButtonWhenAvailable,
+          enablePrecedingAd,
           adUiElements,
           adEventListener,
           imaFactory);
@@ -263,13 +278,14 @@ public final class ImaAdsLoader
           mediaLoadTimeoutMs,
           mediaBitrate,
           focusSkipButtonWhenAvailable,
+          enablePrecedingAd,
           adUiElements,
           adEventListener,
           imaFactory);
     }
   }
 
-  private static final boolean DEBUG = false;
+  private static volatile boolean DEBUG = false;
   private static final String TAG = "ImaAdsLoader";
 
   /**
@@ -318,6 +334,7 @@ public final class ImaAdsLoader
   private final int vastLoadTimeoutMs;
   private final int mediaLoadTimeoutMs;
   private final boolean focusSkipButtonWhenAvailable;
+  private final boolean enablePrecedingAd;
   private final int mediaBitrate;
   private final @Nullable Set<UiElement> adUiElements;
   private final @Nullable AdEventListener adEventListener;
@@ -409,6 +426,7 @@ public final class ImaAdsLoader
         /* mediaLoadTimeoutMs= */ TIMEOUT_UNSET,
         /* mediaBitrate= */ BITRATE_UNSET,
         /* focusSkipButtonWhenAvailable= */ true,
+        /* enablePrecedingAd= */ true,
         /* adUiElements= */ null,
         /* adEventListener= */ null,
         /* imaFactory= */ new DefaultImaFactory());
@@ -436,6 +454,7 @@ public final class ImaAdsLoader
         /* mediaLoadTimeoutMs= */ TIMEOUT_UNSET,
         /* mediaBitrate= */ BITRATE_UNSET,
         /* focusSkipButtonWhenAvailable= */ true,
+        /* enablePrecedingAd= */ true,
         /* adUiElements= */ null,
         /* adEventListener= */ null,
         /* imaFactory= */ new DefaultImaFactory());
@@ -450,6 +469,7 @@ public final class ImaAdsLoader
       int mediaLoadTimeoutMs,
       int mediaBitrate,
       boolean focusSkipButtonWhenAvailable,
+      boolean enablePrecedingAd,
       @Nullable Set<UiElement> adUiElements,
       @Nullable AdEventListener adEventListener,
       ImaFactory imaFactory) {
@@ -460,6 +480,7 @@ public final class ImaAdsLoader
     this.mediaLoadTimeoutMs = mediaLoadTimeoutMs;
     this.mediaBitrate = mediaBitrate;
     this.focusSkipButtonWhenAvailable = focusSkipButtonWhenAvailable;
+    this.enablePrecedingAd = enablePrecedingAd;
     this.adUiElements = adUiElements;
     this.adEventListener = adEventListener;
     this.imaFactory = imaFactory;
@@ -1054,17 +1075,28 @@ public final class ImaAdsLoader
     long contentPositionMs = player.getCurrentPosition();
     int adGroupIndexForPosition =
         adPlaybackState.getAdGroupIndexForPositionUs(C.msToUs(contentPositionMs));
-    if (adGroupIndexForPosition > 0 && adGroupIndexForPosition != C.INDEX_UNSET) {
+    boolean precedingAdSkipped = false;
+    if (adGroupIndexForPosition > 0) {
       // Skip any ad groups before the one at or immediately before the playback position.
       for (int i = 0; i < adGroupIndexForPosition; i++) {
         adPlaybackState = adPlaybackState.withSkippedAdGroup(i);
       }
-      // Play ads after the midpoint between the ad to play and the one before it, to avoid issues
-      // with rounding one of the two ad times.
-      long adGroupForPositionTimeUs = adGroupTimesUs[adGroupIndexForPosition];
-      long adGroupBeforeTimeUs = adGroupTimesUs[adGroupIndexForPosition - 1];
-      double midpointTimeUs = (adGroupForPositionTimeUs + adGroupBeforeTimeUs) / 2d;
-      adsRenderingSettings.setPlayAdsAfterTime(midpointTimeUs / C.MICROS_PER_SECOND);
+      if (enablePrecedingAd) {
+        // Play ads after the midpoint between the ad to play and the one before it, to avoid issues
+        // with rounding one of the two ad times.
+        long adGroupForPositionTimeUs = adGroupTimesUs[adGroupIndexForPosition];
+        long adGroupBeforeTimeUs = adGroupTimesUs[adGroupIndexForPosition - 1];
+        double midpointTimeUs = (adGroupForPositionTimeUs + adGroupBeforeTimeUs) / 2d;
+        adsRenderingSettings.setPlayAdsAfterTime(midpointTimeUs / C.MICROS_PER_SECOND);
+      } else {
+        adPlaybackState = adPlaybackState.withSkippedAdGroup(adGroupIndexForPosition);
+        adsRenderingSettings.setPlayAdsAfterTime(contentPositionMs / 1000.0);
+        precedingAdSkipped = true;
+      }
+    } else if (contentPositionMs > 0 && adGroupIndexForPosition == 0 && !enablePrecedingAd) {
+      adPlaybackState = adPlaybackState.withSkippedAdGroup(adGroupIndexForPosition);
+      adsRenderingSettings.setPlayAdsAfterTime(contentPositionMs / 1000.0);
+      precedingAdSkipped = true;
     }
 
     // IMA indexes any remaining midroll ad pods from 1. A preroll (if present) has index 0.
@@ -1077,10 +1109,10 @@ public final class ImaAdsLoader
       podIndexOffset = -1;
     } else {
       // We are playing a midroll and any ads before it were skipped.
-      podIndexOffset = adGroupIndexForPosition - 1;
+      podIndexOffset = precedingAdSkipped ? adGroupIndexForPosition : adGroupIndexForPosition - 1;
     }
 
-    if (adGroupIndexForPosition != C.INDEX_UNSET && hasMidrollAdGroups(adGroupTimesUs)) {
+    if (!precedingAdSkipped && adGroupIndexForPosition != C.INDEX_UNSET && hasMidrollAdGroups(adGroupTimesUs)) {
       // Provide the player's initial position to trigger loading and playing the ad.
       pendingContentPositionMs = contentPositionMs;
     }
@@ -1102,6 +1134,10 @@ public final class ImaAdsLoader
         int podIndex = adPodInfo.getPodIndex();
         adGroupIndex =
             podIndex == -1 ? (adPlaybackState.adGroupCount - 1) : (podIndex + podIndexOffset);
+        if (DEBUG) {
+          Log.d(TAG, "Loaded podIndex=" + podIndex + ", podIndexOffset=" + podIndexOffset +
+              ", timeOffset=" + adPodInfo.getTimeOffset() + ", adGroupIndex=" + adGroupIndex);
+        }
         int adPosition = adPodInfo.getAdPosition();
         int adCount = adPodInfo.getTotalAds();
         adsManager.start();
@@ -1392,6 +1428,10 @@ public final class ImaAdsLoader
       // There's at least one midroll ad group, as adGroupTimesUs is never empty.
       return true;
     }
+  }
+
+  public static void setDebug(boolean debug) {
+    DEBUG = debug;
   }
 
   /** Factory for objects provided by the IMA SDK. */

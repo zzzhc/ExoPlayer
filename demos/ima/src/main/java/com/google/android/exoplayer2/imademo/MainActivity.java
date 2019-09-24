@@ -50,7 +50,6 @@ public final class MainActivity extends Activity {
   private PlayerView playerView;
 
   private EditText contentPositionText;
-  private EditText continueWatchingPositionText;
 
   private Spinner adTagSpinner;
   private String[] adTagNames;
@@ -75,7 +74,6 @@ public final class MainActivity extends Activity {
     logView = findViewById(R.id.log_view);
 
     contentPositionText = findViewById(R.id.content_position);
-    continueWatchingPositionText= findViewById(R.id.continue_watching_position);
 
     adTagSpinner = findViewById(R.id.ad_tag_spinner);
     String[] adTagItems = getResources().getStringArray(R.array.ad_tag_items);
@@ -120,9 +118,8 @@ public final class MainActivity extends Activity {
 
     String adTagUrl = adTagUrls[adTagSpinner.getSelectedItemPosition()];
     long contentPosition = parsePosition(contentPositionText.getText().toString());
-    long continueWatchingPosition = parsePosition(continueWatchingPositionText.getText().toString());
     player = new PlayerManager(MainActivity.this, adTagUrl, contentPosition,
-        continueWatchingPosition, this::onAdEvent);
+        this::onAdEvent);
     AdsLoader adsLoader = player.getAdsLoader().getAdsLoader();
     adsLoader.addAdErrorListener(this::onAdError);
     adsLoader.addAdsLoadedListener(this::onAdsManagerLoaded);

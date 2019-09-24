@@ -48,14 +48,13 @@ import com.google.android.exoplayer2.util.Util;
   private String adTag;
 
   public PlayerManager(Context context, String adTag, long contentPosition,
-      long continueWatchingPosition,
       AdEvent.AdEventListener adEventListener) {
     this.adTag = adTag;
     this.contentPosition = contentPosition;
-    this.continueWatchingPosition = continueWatchingPosition;
 
+    ImaAdsLoader.setDebug(true);
     adsLoader = new ImaAdsLoader.Builder(context)
-        .setContinueWatchingPositionMs(continueWatchingPosition)
+        .setEnablePrecedingAd(false)
         .setAdEventListener(adEventListener)
         .buildForAdTag(Uri.parse(adTag));
     dataSourceFactory =

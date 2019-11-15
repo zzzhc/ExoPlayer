@@ -15,6 +15,8 @@
  */
 package com.google.android.exoplayer2.ext.ima;
 
+import static com.google.android.exoplayer2.source.ads.AdPlaybackState.AD_STATE_AVAILABLE;
+
 import android.content.Context;
 import android.net.Uri;
 import android.os.Looper;
@@ -1229,6 +1231,12 @@ public final class ImaAdsLoader
     }
     if (!sentContentComplete && !wasPlayingAd && playingAd && imaAdState == IMA_AD_STATE_NONE) {
       int adGroupIndex = player.getCurrentAdGroupIndex();
+      int[] states = adPlaybackState.adGroups[adGroupIndex].states;
+      // ad skipped
+      if (states.length == 0 || states[playingAdIndexInAdGroup] != AD_STATE_AVAILABLE) {
+        return;
+      }
+
       // IMA hasn't called playAd yet, so fake the content position.
       fakeContentProgressElapsedRealtimeMs = SystemClock.elapsedRealtime();
       fakeContentProgressOffsetMs = C.usToMs(adPlaybackState.adGroupTimesUs[adGroupIndex]);

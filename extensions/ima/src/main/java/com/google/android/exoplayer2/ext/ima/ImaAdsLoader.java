@@ -1231,9 +1231,11 @@ public final class ImaAdsLoader
     }
     if (!sentContentComplete && !wasPlayingAd && playingAd && imaAdState == IMA_AD_STATE_NONE) {
       int adGroupIndex = player.getCurrentAdGroupIndex();
-      int[] states = adPlaybackState.adGroups[adGroupIndex].states;
+      AdPlaybackState.AdGroup adGroup = adPlaybackState.adGroups[adGroupIndex];
+      int[] states = adGroup.states;
       // ad skipped
-      if (states.length == 0 || states[playingAdIndexInAdGroup] != AD_STATE_AVAILABLE) {
+      if (adGroup.count != C.LENGTH_UNSET &&
+          (states.length == 0 || states[playingAdIndexInAdGroup] != AD_STATE_AVAILABLE)) {
         return;
       }
 

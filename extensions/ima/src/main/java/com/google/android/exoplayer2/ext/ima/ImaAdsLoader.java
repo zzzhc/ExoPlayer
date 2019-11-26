@@ -867,6 +867,9 @@ public final class ImaAdsLoader
         Log.w(TAG, "Unexpected loadAd in an ad group with no remaining unavailable ads");
         return;
       }
+      if (DEBUG) {
+        Log.d(TAG, "loadAd in ad group " + adGroupIndex + ", adIndexInAdGroup=" + adIndexInAdGroup);
+      }
       adPlaybackState =
           adPlaybackState.withAdUri(adGroupIndex, adIndexInAdGroup, Uri.parse(adUriString));
       updateAdPlaybackState();
@@ -1202,8 +1205,34 @@ public final class ImaAdsLoader
         Map<String, String> adData = adEvent.getAdData();
         String message = "AdEvent: " + adData;
         Log.i(TAG, message);
-        if ("adLoadError".equals(adData.get("type"))) {
+        String type = adData.get("type");
+        String errorCode = adData.get("errorCode");
+        if ("adLoadError".equals(type)) {
           handleAdGroupLoadError(new IOException(message));
+        } else if ("403".equals(errorCode) || "200".equals(errorCode)) {
+          int adGroupIndex = expectedAdGroupIndex;
+          int adIndexInAdGroup = 0;
+          if (playingAd) {
+            adGroupIndex = this.adGroupIndex;
+            adIndexInAdGroup = this.playingAdIndexInAdGroup;
+          }
+          Log.i(TAG, "Log error, adGroupIndex=" + adGroupIndex + ", adIndexInAdGroup=" + adIndexInAdGroup);
+
+          if (playingAd) {
+            adsManager.skip();
+            AdPlaybackState.AdGroup adGroup = adPlaybackState.adGroups[adGroupIndex];
+            if (adGroup.count >= adIndexInAdGroup && adGroup.states[adIndexInAdGroup] == AdPlaybackState.AD_STATE_UNAVAILABLE) {
+              adPlaybackState = adPlaybackState.withAdLoadError(adGroupIndex, adIndexInAdGroup);
+              updateAdPlaybackState();
+            } else {
+              adPlaybackState = adPlaybackState.withSkippedAdGroup(adGroupIndex);
+              updateAdPlaybackState();
+            }
+          } else {
+            adPlaybackState = adPlaybackState.withAdLoadError(adGroupIndex, adIndexInAdGroup);
+            updateAdPlaybackState();
+//            handleAdPrepareError(adGroupIndex, adIndexInAdGroup, new IOException(message));
+          }
         }
         break;
       case STARTED:

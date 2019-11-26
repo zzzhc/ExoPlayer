@@ -126,7 +126,8 @@ import com.google.android.exoplayer2.util.Util;
   @Override
   public int[] getSupportedTypes() {
     // IMA does not support Smooth Streaming ads.
-    return new int[] {C.TYPE_DASH, C.TYPE_HLS, C.TYPE_OTHER};
+//    return new int[] {C.TYPE_DASH, C.TYPE_HLS, C.TYPE_OTHER};
+    return new int[] {C.TYPE_OTHER};
   }
 
   // Internal methods.
